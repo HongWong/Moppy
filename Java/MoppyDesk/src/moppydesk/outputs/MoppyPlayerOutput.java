@@ -24,9 +24,9 @@ public class MoppyPlayerOutput implements MoppyReceiver {
         30578, 28861, 27242, 25713, 24270, 22909, 21622, 20409, 19263, 18182, 17161, 16198, //C1 - B1
         15289, 14436, 13621, 12856, 12135, 11454, 10811, 10205, 9632, 9091, 8581, 8099, //C2 - B2
         7645, 7218, 6811, 6428, 6068, 5727, 5406, 5103, 4816, 4546, 4291, 4050, //C3 - B3
-        3823, 3609, 3406, 3214, 3034, 2864, 2703, 2552, 2408, 2273, 2146, 2025, //C4 - B4
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        3823, 3609, 3406, 3214, 3034, 2864, 2703, 2552, 2408, 2273, 2146, 2025, //C4 - B4 FLOPPY MAX
+        1912, 1804, 1703, 1608, 1517, 1432, 1352, 1276, 1204, 1137, 1073, 1013,//C5 - B5 EXTENDED RANGE
+        956, 902, 852, 804, 759, 716, 676, 638, 602, 569, 537, 507,//C6 - B6 EXTENDED RANGE
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     
@@ -44,8 +44,8 @@ public class MoppyPlayerOutput implements MoppyReceiver {
      * Current period of each MIDI channel (zero is off) as set 
      * by the NOTE ON message; for pitch-bending.
      */
-    private int[] currentPeriod = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    
+    private int[] currentPeriod = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    //array extended for more channels, unused for now.
     MoppyCOMBridge mb;
     SerialPort com;
 
@@ -77,7 +77,7 @@ public class MoppyPlayerOutput implements MoppyReceiver {
             //NOTE: Java bytes range from -128 to 127, but we need to make them
             //0-255 to use for lookups.  & 0xFF does the trick.
 
-            // After looking up the period, devide by (the Arduino resolution * 2).
+            // After looking up the period, divide by (the Arduino resolution * 2).
             // The Arduino's timer will only tick once per X microseconds based on the
             // resolution.  And each tick will only turn the pin on or off.  So a full
             // on-off cycle (one step on the floppy) is two periods.
@@ -87,7 +87,8 @@ public class MoppyPlayerOutput implements MoppyReceiver {
             //System.out.println(message.getLength() + " " + message.getMessage()[message.getLength()-1]);
 
             //Zero velocity events turn off the pin.
-            if (message.getMessage()[2] == 0) {
+            //ADDED note off if the period is 0
+            if (message.getMessage()[2] == 0 || period == 0) {
                 mb.sendEvent(pin, 0);
                 currentPeriod[message.getStatus() - 144] = 0;
             } else {
